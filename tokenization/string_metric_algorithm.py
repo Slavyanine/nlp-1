@@ -1,17 +1,11 @@
 def get_jaccard_index(_a, _b):
     _a, _b = _get_lower_case(_a, _b)
-    _a, _b = _transform_to_set(_a), _transform_to_set(_b)
-    return len(_a.intersection(_b)) / len(_a.union(_b))
+    _a, _b = set(_a), set(_b)
+    return len(_a & _b) / len(_a | _b)
 
 
-def _transform_to_set(_x):
-    _xx = set()
-    if not isinstance(_x, set):
-        for item in _x:
-            _xx.add(item)
-    else:
-        return _x
-    return _xx
+def get_jaccard_distance(_a, _b):
+    return 1 - get_jaccard_index(_a, _b)
 
 
 def _get_lower_case(_a, _b):
@@ -40,9 +34,10 @@ def get_jaro_similarity(_a, _b):
             j, j_count, m = _get_matches(_a, _b, _scan_window, i, j, j_count, m, t_matches)
             j += 1
     for i in range(0, len(t_matches), 2):
-        t_matches[i + 1].reverse()
-        if t_matches[i] == t_matches[i + 1]:
-            t += 1
+        if i + 1 < len(t_matches):
+            t_matches[i + 1].reverse()
+            if t_matches[i] == t_matches[i + 1]:
+                t += 1
     return ((m / len(_a)) + (m / len(_b)) + ((m - t) / m)) * (1 / 3) if m != 0 else 0
 
 
@@ -63,10 +58,11 @@ def _get_scan_window(_a, _b):
 def _get_prefix_length(_a, _b):
     _a, _b = _get_lower_case(_a, _b)
     count = 0
+    recommended_value = 4
     for i in range(len(_a)):
         if i < len(_b) and _a[i] == _b[i]:
             count += 1
-    return count
+    return min(count, recommended_value)
 
 
 def get_jaro_winkler_similarity(_a, _b, scaling=0.1):
@@ -77,13 +73,17 @@ def get_jaro_winkler_similarity(_a, _b, scaling=0.1):
     return jaro_distance + (prefix_length * scaling * (1 - jaro_distance))
 
 
-print(get_jaccard_index({'a', 'B', 'c'}, ['b', 'c', 'd']))
-print()
-print(get_jaro_similarity(['M', 'A', 'R', 'H', 'T', 'A'], ['M', 'A', 'R', 'T', 'H', 'A']))
-print(get_jaro_winkler_similarity(['M', 'A', 'R', 'H', 'T', 'A'], ['M', 'A', 'R', 'T', 'H', 'A']))
-print()
-print(get_jaro_similarity('DICKSONX', 'DIXON'))
-print(get_jaro_winkler_similarity('DICKSONX', 'DIXON'))
-print()
-print(get_jaro_similarity('CRATE', 'TRACE'))
-print(get_jaro_winkler_similarity('CRATE', 'TRACE'))
+jaccard_str = 'S1 = {}\nS2 = {}\nJaccard index = {}\nJaccard distance = {}\n'
+jaro_str = 'S1 = {}\nS2 = {}\nJaro similarity = {}\nJaro-Winkler similarity = {}\n'
+s1, s2 = {'a', 'B', 'c'}, ['b', 'c', 'd']
+s3, s4 = 'aaaaaaaa', 'bbbbbbaa'
+s5, s6 = 'CRATE', 'TRACE'
+s7, s8 = ['M', 'A', 'R', 'H', 'T', 'A'], ['M', 'A', 'R', 'T', 'H', 'A']
+s9, s10 = 'DICKSONX', 'DIXON'
+print(jaccard_str.format(s1, s2, get_jaccard_index(s1, s2), get_jaccard_distance({'a', 'B', 'c'}, ['b', 'c', 'd'])))
+print(jaccard_str.format(s3, s4, get_jaccard_index(s3, s4), get_jaccard_distance(s3, s4)))
+print(jaccard_str.format(s5, s6, get_jaccard_index(s5, s6), get_jaccard_distance(s5, s6)))
+
+print(jaro_str.format(s7, s8, get_jaro_similarity(s7, s8), get_jaro_winkler_similarity(s7, s8)))
+print(jaro_str.format(s9, s10, get_jaro_similarity(s9, s10), get_jaro_winkler_similarity(s9, s10)))
+print(jaro_str.format(s5, s6, get_jaro_similarity(s5, s6), get_jaro_winkler_similarity(s5, s6)))
