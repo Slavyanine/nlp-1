@@ -1,11 +1,41 @@
-def get_jaccard_index(_a, _b):
-    _a, _b = _get_lower_case(_a, _b)
+import re
+from nltk.util import ngrams
+
+_NGRAM = 3
+
+
+def get_jaccard_index(_a, _b, is_sentence=False, is_word=False):
+    if is_sentence:
+        _a, _b = _get_sentence_ngrams(_a), _get_sentence_ngrams(_b)
+    elif is_word:
+        _a, _b = _get_word_ngrams(_a), _get_word_ngrams(_b)
     _a, _b = set(_a), set(_b)
-    return len(_a & _b) / len(_a | _b)
+    intersection = len(_a & _b)
+    union = len(_a | _b)
+    return intersection / union if union > 0 else 1
 
 
-def get_jaccard_distance(_a, _b):
-    return 1 - get_jaccard_index(_a, _b)
+def get_jaccard_distance(_a, _b, is_sentence=True):
+    if is_sentence:
+        return 1 - get_jaccard_index(_get_sentence_ngrams(_a), _get_sentence_ngrams(_b))
+    else:
+        return 1 - get_jaccard_index(_get_word_ngrams(_a), _get_word_ngrams(_b))
+
+
+def _get_word_ngrams(_a, ngram=_NGRAM):
+    if not _a:
+        return None
+    pattern = r'[^a-zA-Zа-яА-Я]?'
+    ng = ngrams(re.sub(pattern, ' ', _a).split(), ngram)
+    return list(ng)
+
+
+def _get_sentence_ngrams(_a, ngram=_NGRAM):
+    if not _a:
+        return None
+    pattern = r'[^a-zA-Zа-яА-Я]+'
+    ng = ngrams(re.sub(pattern, ' ', _a).split(), ngram)
+    return list(ng)
 
 
 def _get_lower_case(_a, _b):
@@ -75,15 +105,17 @@ def get_jaro_winkler_similarity(_a, _b, scaling=0.1):
 
 jaccard_str = 'S1 = {}\nS2 = {}\nJaccard index = {}\nJaccard distance = {}\n'
 jaro_str = 'S1 = {}\nS2 = {}\nJaro similarity = {}\nJaro-Winkler similarity = {}\n'
-s1, s2 = {'a', 'B', 'c'}, ['b', 'c', 'd']
-s3, s4 = 'aaaaaaaa', 'bbbbbbaa'
+s1, s2 = 'I do not like green eggs and ham', 'I do not like them, Sam I am'
+s3, s4 = 'aaaaaaaa', 'aaabbbbbbaa'
 s5, s6 = 'CRATE', 'TRACE'
 s7, s8 = ['M', 'A', 'R', 'H', 'T', 'A'], ['M', 'A', 'R', 'T', 'H', 'A']
 s9, s10 = 'DICKSONX', 'DIXON'
-print(jaccard_str.format(s1, s2, get_jaccard_index(s1, s2), get_jaccard_distance({'a', 'B', 'c'}, ['b', 'c', 'd'])))
-print(jaccard_str.format(s3, s4, get_jaccard_index(s3, s4), get_jaccard_distance(s3, s4)))
-print(jaccard_str.format(s5, s6, get_jaccard_index(s5, s6), get_jaccard_distance(s5, s6)))
-
+print(jaccard_str.format(s1, s2, get_jaccard_index(s1, s2, is_sentence=True),
+                         get_jaccard_distance(s1, s2, is_sentence=True)))
+print(jaccard_str.format(s3, s4, get_jaccard_index(s3, s4, is_word=True),
+                         get_jaccard_distance(s3, s4, is_sentence=False)))
+print(jaccard_str.format(s5, s6, get_jaccard_index(s5, s6, is_word=True),
+                         get_jaccard_distance(s5, s6, is_sentence=False)))
 print(jaro_str.format(s7, s8, get_jaro_similarity(s7, s8), get_jaro_winkler_similarity(s7, s8)))
 print(jaro_str.format(s9, s10, get_jaro_similarity(s9, s10), get_jaro_winkler_similarity(s9, s10)))
 print(jaro_str.format(s5, s6, get_jaro_similarity(s5, s6), get_jaro_winkler_similarity(s5, s6)))
