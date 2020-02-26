@@ -2,6 +2,7 @@ import re
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import numpy as np
 from nltk.util import ngrams
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
@@ -12,8 +13,10 @@ _NGRAM = 3
 def get_jaccard_index(_a, _b, is_sentence=False, is_word=False):
     if is_sentence:
         _a, _b = _get_sentence_ngrams(_a), _get_sentence_ngrams(_b)
+        _a, _b = set(_a), set(_b)
     elif is_word:
         _a, _b = _get_word_ngrams(_a), _get_word_ngrams(_b)
+        _a, _b = [''.join(i) for i in _a], [''.join(i) for i in _b]
     _a, _b = set(_a), set(_b)
     intersection = len(_a & _b)
     union = len(_a | _b)
@@ -22,17 +25,16 @@ def get_jaccard_index(_a, _b, is_sentence=False, is_word=False):
 
 def get_jaccard_distance(_a, _b, is_sentence=True):
     if is_sentence:
-        return 1 - get_jaccard_index(_get_sentence_ngrams(_a), _get_sentence_ngrams(_b))
+        return 1 - get_jaccard_index(_a, _b, is_sentence=True)
     else:
-        return 1 - get_jaccard_index(_get_word_ngrams(_a), _get_word_ngrams(_b))
+        return 1 - get_jaccard_index(_a, _b, is_word=True)
 
 
 def _get_word_ngrams(_a, ngram=_NGRAM):
     if not _a:
         return None
     pattern = r'[^a-zA-Zа-яА-Я]?'
-    ng = ngrams(re.sub(pattern, ' ', _a).split(), ngram)
-    return list(ng)
+    return list(ngrams(re.sub(pattern, ' ', _a).split(), ngram))
 
 
 def _get_sentence_ngrams(_a, ngram=_NGRAM):
@@ -118,12 +120,14 @@ def _sentence_tokenization(_text):
 
 
 def compare_methods(_text):
-    tokens = _word_tokenization(_text)
-    pairs = [(i, (i + 1) % len(tokens)) for i in range(len(tokens))]
+    words = _word_tokenization(_text)
+    stop_words = stopwords.words("english")
+    without_stop_words = [word for word in words if word not in stop_words]
+    pairs = [(i, (i + 1) % len(without_stop_words)) for i in range(len(without_stop_words))]
     scores_data = pd.DataFrame()
     for word_pair in pairs:
-        a = tokens[word_pair[0]]
-        b = tokens[word_pair[1]]
+        a = without_stop_words[word_pair[0]]
+        b = without_stop_words[word_pair[1]]
         jaccard_distance = get_jaccard_distance(a, b, is_sentence=False)
         jaro_similarity = get_jaro_similarity(a, b)
         jaro_winkler_similarity = get_jaro_winkler_similarity(a, b)
@@ -179,7 +183,10 @@ sns.distplot(jaro)
 plt.show()
 sns.distplot(jaro_winkler)
 plt.show()
-
+sns.distplot(jaro)
+sns.distplot(jaccard)
+sns.distplot(jaro_winkler)
+plt.show()
 df = pd.melt(df,
              id_vars=['a', 'b'],
              value_vars=['jaccard_distance', 'jaro_similarity', 'jaro_winkler_similarity'],
