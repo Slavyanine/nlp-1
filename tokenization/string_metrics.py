@@ -1,9 +1,5 @@
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import numpy as np
-from sklearn.cluster import AgglomerativeClustering
-from text_mining.tokenization.helpers import _get_lower_case, compare_methods, plot_dendrogram
+
+from text_mining.tokenization.helpers import _get_lower_case, example_tasks, example_comparing
 from text_mining.tokenization.tokenizer import _get_sentence_ngrams, _get_word_ngrams
 
 
@@ -89,65 +85,7 @@ def get_jaro_winkler_similarity(_a, _b, scaling=0.1):
 
 
 # Example
-jaccard_str = 'S1 = {}\nS2 = {}\nJaccard index = {}\nJaccard distance = {}\n'
-jaro_str = 'S1 = {}\nS2 = {}\nJaro similarity = {}\nJaro-Winkler similarity = {}\n'
-s1, s2 = 'I do not like green eggs and ham', 'I do not like them, Sam I am'
-s3, s4 = 'aaaaaaaa', 'aaabbbbbbaa'
-s5, s6 = 'CRATE', 'TRACE'
-s7, s8 = ['M', 'A', 'R', 'H', 'T', 'A'], ['M', 'A', 'R', 'T', 'H', 'A']
-s9, s10 = 'DICKSONX', 'DIXON'
-print(jaccard_str.format(s1, s2, get_jaccard_index(s1, s2, is_sentence=True),
-                         get_jaccard_distance(s1, s2, is_sentence=True)))
-print(jaccard_str.format(s3, s4, get_jaccard_index(s3, s4, is_word=True),
-                         get_jaccard_distance(s3, s4, is_sentence=False)))
-print(jaccard_str.format(s5, s6, get_jaccard_index(s5, s6, is_word=True),
-                         get_jaccard_distance(s5, s6, is_sentence=False)))
-print(jaro_str.format(s7, s8, get_jaro_similarity(s7, s8), get_jaro_winkler_similarity(s7, s8)))
-print(jaro_str.format(s9, s10, get_jaro_similarity(s9, s10), get_jaro_winkler_similarity(s9, s10)))
-print(jaro_str.format(s5, s6, get_jaro_similarity(s5, s6), get_jaro_winkler_similarity(s5, s6)))
+example_tasks()
 
 # Compare methods
-text = "Natural language processing (NLP) is a field " + \
-       "of computer science, artificial intelligence " + \
-       "and computational linguistics concerned with " + \
-       "the interactions between computers and human " + \
-       "(natural) languages, and, in particular, " + \
-       "concerned with programming computers to " + \
-       "fruitfully process large natural language " + \
-       "corpora. Challenges in natural language " + \
-       "processing frequently involve natural " + \
-       "language understanding, natural language" + \
-       "generation frequently from formal, machine" + \
-       "-readable logical forms), connecting language " + \
-       "and machine perception, managing human-" + \
-       "computer dialog systems, or some combination."
-df = compare_methods(text)
-jaccard = df.jaccard_distance
-jaro = df.jaro_similarity
-jaro_winkler = df.jaro_winkler_similarity
-sns.distplot(jaccard)
-plt.show()
-sns.distplot(jaro)
-plt.show()
-sns.distplot(jaro_winkler)
-plt.show()
-sns.distplot(jaro)
-sns.distplot(jaccard)
-sns.distplot(jaro_winkler)
-plt.show()
-
-df.index = np.arange(0, len(df))
-print(df)
-model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
-model = model.fit(df.drop(['a', 'b'], axis=1))
-plot_dendrogram(model, truncate_mode='level')
-plt.show()
-
-df = pd.melt(df,
-             id_vars=['a', 'b'],
-             value_vars=['jaccard_index', 'jaccard_distance', 'jaro_similarity', 'jaro_winkler_similarity'],
-             var_name='method',
-             value_name='score')
-lp = sns.lineplot(x='a', y='score', hue='method', data=df)
-lp.set_xticklabels(lp.get_xticklabels(), rotation=90)
-plt.show()
+example_comparing()
