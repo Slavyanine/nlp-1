@@ -1,13 +1,10 @@
-import re
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-from nltk.util import ngrams
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.corpus import stopwords
-
-_NGRAM = 3
+from sklearn.cluster import AgglomerativeClustering
+from text_mining.tokenization.helpers import _get_lower_case, compare_methods, plot_dendrogram
+from text_mining.tokenization.tokenizer import _get_sentence_ngrams, _get_word_ngrams
 
 
 def get_jaccard_index(_a, _b, is_sentence=False, is_word=False):
@@ -28,25 +25,6 @@ def get_jaccard_distance(_a, _b, is_sentence=True):
         return 1 - get_jaccard_index(_a, _b, is_sentence=True)
     else:
         return 1 - get_jaccard_index(_a, _b, is_word=True)
-
-
-def _get_word_ngrams(_a, ngram=_NGRAM):
-    if not _a:
-        return None
-    pattern = r'[^a-zA-Zа-яА-Я]?'
-    return list(ngrams(re.sub(pattern, ' ', _a).split(), ngram))
-
-
-def _get_sentence_ngrams(_a, ngram=_NGRAM):
-    if not _a:
-        return None
-    pattern = r'[^a-zA-Zа-яА-Я]+'
-    ng = ngrams(re.sub(pattern, ' ', _a).split(), ngram)
-    return list(ng)
-
-
-def _get_lower_case(_a, _b):
-    return [i.lower() for i in _a], [i.lower() for i in _b]
 
 
 def get_jaro_similarity(_a, _b):
@@ -110,35 +88,6 @@ def get_jaro_winkler_similarity(_a, _b, scaling=0.1):
     return jaro_distance + (prefix_length * scaling * (1 - jaro_distance))
 
 
-def _word_tokenization(_text):
-    pattern = r'[^a-zA-Zа-яА-Я]+'
-    return re.sub(pattern, ' ', _text).split()
-
-
-def _sentence_tokenization(_text):
-    return sent_tokenize(_text)
-
-
-def compare_methods(_text):
-    words = _word_tokenization(_text)
-    stop_words = stopwords.words("english")
-    without_stop_words = [word for word in words if word not in stop_words]
-    pairs = [(i, (i + 1) % len(without_stop_words)) for i in range(len(without_stop_words))]
-    scores_data = pd.DataFrame()
-    for word_pair in pairs:
-        a = without_stop_words[word_pair[0]]
-        b = without_stop_words[word_pair[1]]
-        jaccard_distance = get_jaccard_distance(a, b, is_sentence=False)
-        jaro_similarity = get_jaro_similarity(a, b)
-        jaro_winkler_similarity = get_jaro_winkler_similarity(a, b)
-        scores_data = scores_data.append(pd.DataFrame({'a': a,
-                                                       'b': b,
-                                                       'jaccard_distance': jaccard_distance,
-                                                       'jaro_similarity': jaro_similarity,
-                                                       'jaro_winkler_similarity': jaro_winkler_similarity}, index=[0]))
-    return scores_data
-
-
 # Example
 jaccard_str = 'S1 = {}\nS2 = {}\nJaccard index = {}\nJaccard distance = {}\n'
 jaro_str = 'S1 = {}\nS2 = {}\nJaro similarity = {}\nJaro-Winkler similarity = {}\n'
@@ -172,7 +121,6 @@ text = "Natural language processing (NLP) is a field " + \
        "-readable logical forms), connecting language " + \
        "and machine perception, managing human-" + \
        "computer dialog systems, or some combination."
-
 df = compare_methods(text)
 jaccard = df.jaccard_distance
 jaro = df.jaro_similarity
@@ -187,15 +135,19 @@ sns.distplot(jaro)
 sns.distplot(jaccard)
 sns.distplot(jaro_winkler)
 plt.show()
+
+df.index = np.arange(0, len(df))
+print(df)
+model = AgglomerativeClustering(distance_threshold=0, n_clusters=None)
+model = model.fit(df.drop(['a', 'b'], axis=1))
+plot_dendrogram(model, truncate_mode='level')
+plt.show()
+
 df = pd.melt(df,
              id_vars=['a', 'b'],
-             value_vars=['jaccard_distance', 'jaro_similarity', 'jaro_winkler_similarity'],
+             value_vars=['jaccard_index', 'jaccard_distance', 'jaro_similarity', 'jaro_winkler_similarity'],
              var_name='method',
              value_name='score')
 lp = sns.lineplot(x='a', y='score', hue='method', data=df)
 lp.set_xticklabels(lp.get_xticklabels(), rotation=90)
 plt.show()
-
-# nltk.download('punkt')
-# nltk.download('stopwords')
-# stopwords.words("english")
