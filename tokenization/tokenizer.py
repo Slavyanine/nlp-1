@@ -23,7 +23,7 @@ def custom_word_tokenize(_text):
 
 
 def custom_sentence_tokenize(_text):
-    pattern = r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s'
+    pattern = r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s'
     return re.sub(pattern, '\n', _text).splitlines()
 
 

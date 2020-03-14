@@ -1,4 +1,4 @@
-import text_mining.tokenization.helpers as hp
+import text_mining.helpers.helpers as hp
 import text_mining.tokenization.tokenizer as tk
 
 
