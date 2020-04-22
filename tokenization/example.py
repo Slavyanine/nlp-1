@@ -5,7 +5,7 @@ import text_mining.tokenization.tokenizer as tk
 import text_mining.helpers.helpers as hp
 from scipy.cluster.hierarchy import dendrogram, linkage
 
-
+#иерархическая кластеризация
 def get_linkages(indeces, words):
     jaccard_weights = np.apply_along_axis(sm.get_jaccard_index, 0, indeces, words)
     jaro_weights = np.apply_along_axis(sm.get_jaro_similarity, 0, indeces, words)
